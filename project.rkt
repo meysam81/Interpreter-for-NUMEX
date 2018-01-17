@@ -8,6 +8,18 @@
 
 ;; Add the missing ones
 
+(struct var  (str)    #:transparent)  ;; variable
+(struct mult  (e1 e2)    #:transparent)  ;; multiplication
+(struct neg  (e)    #:transparent)  ;;  negation
+(struct islthan  (e1 e2)    #:transparent)  ;;  comparison
+(struct ifzero  (e1 e2 e3)    #:transparent)  ;;  
+(struct ifgthan  (e1 e2 e3 e4)    #:transparent)  ;;  
+(struct mlet  (s e1 e2)    #:transparent)  ;;  
+(struct apair  (e1 e2)    #:transparent)  ;;  pair constructor
+(struct first  (e)    #:transparent)  ;;
+(struct second  (e)    #:transparent)  ;;  
+
+
 (struct int  (num)    #:transparent)  ;; a constant number, e.g., (int 17)
 (struct add  (e1 e2)  #:transparent)  ;; add two expressions
 
@@ -34,7 +46,7 @@
 (define (envlookup env str)
   (cond [(null? env) (error "unbound variable during evaluation" str)]
   		"CHANGE" 
-		)
+		))
 
 ;; Do NOT change the two cases given to you.  
 ;; DO add more cases for other kinds of NUMEX expressions.
