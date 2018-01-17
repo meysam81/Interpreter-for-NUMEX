@@ -36,7 +36,10 @@
 
 ;; Problem 1
 
-(define (racketlist->numexlist xs) "CHANGE")
+(define (racketlist->numexlist xs) (apair
+                                    (cond ((null? (car xs)) (munit))
+                                     (#t (eval-exp (car xs))))
+                                    (racketlist->numexlist (cdr xs))))
 (define (numexlist->racketlist xs) "CHANGE")
 
 ;; Problem 2
