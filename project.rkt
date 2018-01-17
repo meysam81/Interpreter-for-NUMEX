@@ -37,8 +37,12 @@
 ;; Problem 1
 
 (define (racketlist->numexlist xs) (apair
-                                    (cond ((null? (car xs)) (munit))
-                                     (#t (eval-exp (car xs))))
+                                    (cond
+                                      ((null? (car xs)) (munit))
+                                      ((string? (car xs)) (var (car xs)))
+                                      ((integer? (car xs)) (int (car xs)))
+                                      (#t (xs))
+                                      )
                                     (racketlist->numexlist (cdr xs))))
 (define (numexlist->racketlist xs) "CHANGE")
 
