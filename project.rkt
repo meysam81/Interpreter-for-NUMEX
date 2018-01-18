@@ -34,17 +34,18 @@
 ;; a closure is not in "source" programs; it is what functions evaluate to
 (struct closure (env fun) #:transparent) 
 
-;; Problem 1
+;; Problem 1 solved proudly :D
 
-(define (racketlist->numexlist xs) (apair
-                                    (cond
-                                      ((null? (car xs)) (munit))
-                                      ((string? (car xs)) (var (car xs)))
-                                      ((integer? (car xs)) (int (car xs)))
-                                      (#t (xs))
-                                      )
-                                    (racketlist->numexlist (cdr xs))))
-(define (numexlist->racketlist xs) "CHANGE")
+(define (racketlist->numexlist xs) (cond
+                                     ((null? xs) (munit))
+                                     (#t (apair
+                                          (car xs)
+                                          (racketlist->numexlist (cdr xs))))))
+(define test (racketlist->numexlist '(1 2 3 4)))
+(define (numexlist->racketlist xs) (cond
+                                     ((munit? xs) '())
+                                     (#t (cons
+                                         (apair-e1 xs) (numexlist->racketlist (apair-e2 xs))))))
 
 ;; Problem 2
 
