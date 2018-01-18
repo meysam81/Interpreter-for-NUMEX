@@ -52,7 +52,7 @@
 ;; Complete this function => done beautifully, as I myself enjoyed
 (define (envlookup env str)
   (cond [(null? env) (error "unbound variable during evaluation" str)]
-        [(equal? str (car (car env))) (cdr (car (env)))]
+        [(equal? str (car (car env))) (cdr (car env))]
         [#t (envlookup (cdr env) str)]
         ))
 
@@ -64,12 +64,23 @@
   (cond
     [(int? e)
      (let
-         (v (int-num e))
+         [(v (int-num e))]
        (cond
          ((integer? v) e) ;; terminal i.e. base case of evel-under-env
          (#t (error "NUMEX int applied to non-number"))))]
     
     ;; add closure here if you understand what it means
+    ;; trying to understand what it means
+    [(closure? e)
+     (let
+         [(v1 (closure-fun e))
+          (v2 (closure-env e))]
+      (cond
+        ((fun? v1) e )
+         (#t (error "NUMEX closure applied to non-number"))))]
+    ;; function
+;    [(fun? e)
+;     (let [(v {fun-})])]
     
     [(var? e) ;; A variable evaluates to the value associated with it in the given environment
      (envlookup env (var-string e))]
@@ -91,12 +102,10 @@
                    (int-num v2)))
            (error "NUMEX mult applied to non-number")))]
     [(neg? e) 
-     (let {tmp (eval-under-env (neg-e e) env)}
+     (let {[tmp (eval-under-env (neg-e e) env)]}
        (cond
          [(int? tmp) (int (- (int-num tmp)))]
          [#t (error "NUMEX neg applied to non-number")]))]
-    
-    ;; function
     
     [(islthan? e)
      (let ({v1 [eval-under-env (islthan-e1 e) env]}
@@ -107,53 +116,55 @@
             ((< (int-num v1) (int-num v2)) (int 1))
             (#t (int 0))])
          (#t (error "NUMEX islthan applied to non-number"))))]
-     [(ifzero? e)
-      (let [v1 (evel-under-exp (ifzero-e1 e) env)]
-        (cond
-          {(int? v1) (cond ;; Error handling - Type THREE ;;
-                       (eval-under-exp (ifzero-e2 e) env) ;; IS zero
-                       (eval-under-exp (ifzero-e3 e) env) ;; is NOT zero
-                       )}
-          {#t (error "NUMEX iszero applied to non-number")}))]
-
-     [(ifgthan? e)
-      (let {[v1 (eval-under-exp (ifgthan-e1 e))]
-            [v2 (eval-under-exp (ifgthan-e2 e))]}
-        ;; body of let
-        (cond
-          ((and (int? v1) (int? v2)) {cond
-                                       (eval-under-exp (ifgthan-e3 e) env) ;; e1 > e2
-                                       (eval-under-exp (ifgthan-e4 e) env) ;; otherwise
-                                       })
-          {#t (error "NUMEX isgthan applied to non-number")})
-        )]
-     [(apair? e)
-      (let ([v1 (eval-under-exp (apair-e1 e) env)]
-            [v2 (eval-under-exp (apair-e2 e) env)])
-        ; body
-        {cond
-          ((and (int? v1) (int? v2)) (apair v1 v2))
-          {#t (error "NUMEX apair applied to non-number")}})]
-     [(first? e)
-      (let (v {eval-under-exp (first-e) env})
-        ; body
-        (cond
-          ((apair? v) (apair-e1 v))
-          {#t (error "NUMEX first applied to non-number")}))]
-     
+    [(ifzero? e)
+     (let [{v1 (eval-under-env (ifzero-e1 e) env)}]
+       (cond
+         {(int? v1) ;; Error handling - Type THREE ;;
+          (cond 
+            [(zero? (int-num v1)) (eval-under-env (ifzero-e2 e) env)] ;; IS zero
+            [#t (eval-under-env (ifzero-e3 e) env)] ;; is NOT zero
+            )}
+         {#t (error "NUMEX iszero applied to non-number")}))]
+    
+    [(ifgthan? e)
+     (let {[v1 (eval-under-env (ifgthan-e1 e) env)]
+           [v2 (eval-under-env (ifgthan-e2 e) env)]}
+       ;; body of let
+       (cond
+         ((and (int? v1) (int? v2))
+          {cond
+            [(> (int-num v1) (int-num v2)) (eval-under-env (ifgthan-e3 e) env)] ;; e1 > e2
+            [#t (eval-under-env (ifgthan-e4 e) env)] ;; otherwise
+            })
+         {#t (error "NUMEX isgthan applied to non-number")})
+       )]
+    [(apair? e)
+     (let ([v1 (eval-under-env (apair-e1 e) env)]
+           [v2 (eval-under-env (apair-e2 e) env)])
+       ; body
+       {cond
+         ((and (int? v1) (int? v2)) (apair v1 v2))
+         {#t (error "NUMEX apair applied to non-number")}})]
+    [(first? e)
+     (let [(v {eval-under-env (first-e e) env})]
+       ; body
+       (cond
+         ((apair? v) (apair-e1 v))
+         {#t (error "NUMEX first applied to non-number")}))]
+    
     [(second? e)
-      (let (v {eval-under-exp (second-e) env})
-        ; body
-        (cond
-          ((apair? v) (apair-e2 v))
-          {#t (error "NUMEX second applied to non-number")}))]
+     (let [(v {eval-under-env (second-e e) env})]
+       ; body
+       (cond
+         ((apair? v) (apair-e2 v))
+         {#t (error "NUMEX second applied to non-number")}))]
     [(ismunit? e)
-     (let (v {eval-under-exp (ismunit-e) env})
-        ; body
-        (cond
-          ((munit? v) (int 1))
-          {#t (int 0)}))]
-     
+     (let [(v {eval-under-env (ismunit-e e) env})]
+       ; body
+       (cond
+         ((munit? v) (int 1))
+         {#t (int 0)}))]
+    
     ;; CHANGE add more cases here => of course
     [#t (error (format "bad NUMEX expression: ~v" e))])) ;; Error handling - Type ONE ;;
 
