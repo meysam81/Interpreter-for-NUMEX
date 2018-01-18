@@ -6,9 +6,9 @@
 
 ;; definition of structures for NUMEX programs
 
-;; Add the missing ones
+;; Add the missing ones => added with a slight bit of care
 
-(struct var  (str)    #:transparent)  ;; variable
+(struct var  (string)    #:transparent)  ;; variable
 (struct mult  (e1 e2)    #:transparent)  ;; multiplication
 (struct neg  (e)    #:transparent)  ;;  negation
 (struct islthan  (e1 e2)    #:transparent)  ;;  comparison
@@ -34,50 +34,133 @@
 ;; a closure is not in "source" programs; it is what functions evaluate to
 (struct closure (env fun) #:transparent) 
 
-;; Problem 1 solved proudly :D
+;; Problem 1 => solved proudly :D
 
 (define (racketlist->numexlist xs) (cond
                                      ((null? xs) (munit))
                                      (#t (apair
                                           (car xs)
                                           (racketlist->numexlist (cdr xs))))))
-(define test (racketlist->numexlist '(1 2 3 4)))
 (define (numexlist->racketlist xs) (cond
                                      ((munit? xs) '())
                                      (#t (cons
-                                         (apair-e1 xs) (numexlist->racketlist (apair-e2 xs))))))
+                                          (apair-e1 xs) (numexlist->racketlist (apair-e2 xs))))))
 
 ;; Problem 2
 
 ;; lookup a variable in an environment
-;; Complete this function
+;; Complete this function => done beautifully, as I myself enjoyed
 (define (envlookup env str)
   (cond [(null? env) (error "unbound variable during evaluation" str)]
-  		"CHANGE" 
-		))
+        [(equal? str (car (car env))) (cdr (car (env)))]
+        [#t (envlookup (cdr env) str)]
+        ))
 
 ;; Do NOT change the two cases given to you.  
 ;; DO add more cases for other kinds of NUMEX expressions.
 ;; We will test eval-under-env by calling it directly even though
 ;; "in real life" it would be a helper function of eval-exp.
 (define (eval-under-env e env)
-  (cond [(var? e) 
-         (envlookup env (var-string e))]
-        [(add? e) 
-         (let ([v1 (eval-under-env (add-e1 e) env)]
-               [v2 (eval-under-env (add-e2 e) env)])
-           (if (and (int? v1)
-                    (int? v2))
-               (int (+ (int-num v1) 
-                       (int-num v2)))
-               (error "NUMEX addition applied to non-number")))]
-        ;; CHANGE add more cases here
-        [#t (error (format "bad NUMEX expression: ~v" e))]))
+  (cond
+    [(int? e)
+     (let
+         (v (int-num e))
+       (cond
+         ((integer? v) e) ;; terminal i.e. base case of evel-under-env
+         (#t (error "NUMEX int applied to non-number"))))]
+    
+    ;; add closure here if you understand what it means
+    
+    [(var? e) ;; A variable evaluates to the value associated with it in the given environment
+     (envlookup env (var-string e))]
+    
+    [(add? e) 
+     (let ([v1 (eval-under-env (add-e1 e) env)]
+           [v2 (eval-under-env (add-e2 e) env)])
+       (if (and (int? v1)
+                (int? v2))
+           (int (+ (int-num v1) 
+                   (int-num v2)))
+           (error "NUMEX add applied to non-number")))]
+    [(mult? e)
+     (let ([v1 (eval-under-env (mult-e1 e) env)]
+           [v2 (eval-under-env (mult-e2 e) env)])
+       (if (and (int? v1)
+                (int? v2))
+           (int (* (int-num v1) 
+                   (int-num v2)))
+           (error "NUMEX mult applied to non-number")))]
+    [(neg? e) 
+     (let {tmp (eval-under-env (neg-e e) env)}
+       (cond
+         [(int? tmp) (int (- (int-num tmp)))]
+         [#t (error "NUMEX neg applied to non-number")]))]
+    
+    ;; function
+    
+    [(islthan? e)
+     (let ({v1 [eval-under-env (islthan-e1 e) env]}
+           {v2 [eval-under-env (islthan-e2 e) env]})
+       (cond
+         ([and (int? v1) (int? v2)]
+          [cond
+            ((< (int-num v1) (int-num v2)) (int 1))
+            (#t (int 0))])
+         (#t (error "NUMEX islthan applied to non-number"))))]
+     [(ifzero? e)
+      (let [v1 (evel-under-exp (ifzero-e1 e) env)]
+        (cond
+          {(int? v1) (cond ;; Error handling - Type THREE ;;
+                       (eval-under-exp (ifzero-e2 e) env) ;; IS zero
+                       (eval-under-exp (ifzero-e3 e) env) ;; is NOT zero
+                       )}
+          {#t (error "NUMEX iszero applied to non-number")}))]
 
-;; Do NOT change
+     [(ifgthan? e)
+      (let {[v1 (eval-under-exp (ifgthan-e1 e))]
+            [v2 (eval-under-exp (ifgthan-e2 e))]}
+        ;; body of let
+        (cond
+          ((and (int? v1) (int? v2)) {cond
+                                       (eval-under-exp (ifgthan-e3 e) env) ;; e1 > e2
+                                       (eval-under-exp (ifgthan-e4 e) env) ;; otherwise
+                                       })
+          {#t (error "NUMEX isgthan applied to non-number")})
+        )]
+     [(apair? e)
+      (let ([v1 (eval-under-exp (apair-e1 e) env)]
+            [v2 (eval-under-exp (apair-e2 e) env)])
+        ; body
+        {cond
+          ((and (int? v1) (int? v2)) (apair v1 v2))
+          {#t (error "NUMEX apair applied to non-number")}})]
+     [(first? e)
+      (let (v {eval-under-exp (first-e) env})
+        ; body
+        (cond
+          ((apair? v) (apair-e1 v))
+          {#t (error "NUMEX first applied to non-number")}))]
+     
+    [(second? e)
+      (let (v {eval-under-exp (second-e) env})
+        ; body
+        (cond
+          ((apair? v) (apair-e2 v))
+          {#t (error "NUMEX second applied to non-number")}))]
+    [(ismunit? e)
+     (let (v {eval-under-exp (ismunit-e) env})
+        ; body
+        (cond
+          ((munit? v) (int 1))
+          {#t (int 0)}))]
+     
+    ;; CHANGE add more cases here => of course
+    [#t (error (format "bad NUMEX expression: ~v" e))])) ;; Error handling - Type ONE ;;
+
+;; Do NOT change => of course
 (define (eval-exp e)
   (eval-under-env e null))
-        
+
 ;; Problem 3
 
 (define (ifmunit e1 e2 e3) "CHANGE")
