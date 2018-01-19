@@ -175,20 +175,20 @@
          ((and (int? v1) (int? v2)) (apair v1 v2))
          {#t (error "NUMEX apair applied to non-number")}})]
     [(first? e)
-     (let [(v {eval-under-env (first-e e) env})]
+     (let [(v {first-e e})]
        ; body
        (cond
          ((apair? v) (apair-e1 v))
          {#t (error "NUMEX first applied to non-number")}))]
     
     [(second? e)
-     (let [(v {eval-under-env (second-e e) env})]
+     (let [(v (second-e e) )]
        ; body
        (cond
          ((apair? v) (apair-e2 v))
          {#t (error "NUMEX second applied to non-number")}))]
     [(ismunit? e)
-     (let [(v {eval-under-env (ismunit-e e) env})]
+     (let [(v (ismunit-e e))]
        ; body
        (cond
          ((munit? v) (int 1))
