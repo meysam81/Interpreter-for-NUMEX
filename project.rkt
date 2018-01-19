@@ -201,13 +201,21 @@
 (define (eval-exp e)
   (eval-under-env e null))
 
-;; Problem 3
+;; Problem 3 => done beautifully
 
-(define (ifmunit e1 e2 e3) "CHANGE")
+(define (ifmunit e1 e2 e3)
+  (if (equal?  e1 (munit)) e2 e3))
 
-(define (mlet* bs e2) "CHANGE")
+(define (mlet* bs e2)
+  (if (not (null? (car bs)))
+      (if (null? (cdr bs)) (mlet (caar bs) (cdar bs) e2)
+          (mlet (caar bs) (cdar bs) (mlet* (cdr bs) e2)))
+      (error "NUMEX mlet*'s first argument is empty")))
 
-(define (ifeq e1 e2 e3 e4) "CHANGE")
+(define (ifeq e1 e2 e3 e4)
+  (if (and
+       (equal? e1 e2))       
+       e3 e4))
 
 ;; Problem 4
 
