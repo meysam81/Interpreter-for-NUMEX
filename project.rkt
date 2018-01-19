@@ -76,11 +76,28 @@
          [(v1 (closure-fun e))
           (v2 (closure-env e))]
       (cond
-        ((fun? v1) e )
+        ((fun? v1) e)  ; return the closure itself
          (#t (error "NUMEX closure applied to non-number"))))]
-    ;; function
-;    [(fun? e)
-;     (let [(v {fun-})])]
+
+    ; functions => I think I got it!!!
+    [(fun? e)
+     (let [(v1 {fun-formal e})
+           {v2 {fun-body e}}]
+       (if (string? v1) ; a variable?
+           (closure env (eval-under-env v2 env)); then
+           (error "NUMEX function argument not a string"); else
+           ))]
+    [(call? e)
+     (let {[v1 (eval-under-env (call-funexp e) env)]
+           [v2 (eval-under-env (call-actual e) env)]}
+       (if (closure? v1)
+           {if (int? v2)
+               ; to be honest, I don't even know what I did below,
+               ; I just did and bang, magic happens
+               (eval-under-env (closure-fun v1) v2)
+               (error "NUMEX call-actual not an int")}
+           (error "NUMEX call-funexp not a closure")))
+     ]
     
     [(var? e) ;; A variable evaluates to the value associated with it in the given environment
      (envlookup env (var-string e))]
