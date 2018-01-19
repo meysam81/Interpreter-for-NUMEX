@@ -171,21 +171,24 @@
      (let ([v1 (eval-under-env (apair-e1 e) env)]
            [v2 (eval-under-env (apair-e2 e) env)])
        ; body
-       {cond
-         ((and (int? v1) (int? v2)) (apair v1 v2))
-         {#t (error "NUMEX apair applied to non-number")}})]
+       {if
+         (munit? v1)
+         (munit)
+         (apair v1 v2)})]
     [(first? e)
-     (let [(v {first-e e})]
+     (let [(v (eval-under-env {first-e e} env))]
        ; body
        (cond
          ((apair? v) (apair-e1 v))
+         ((munit? v) (munit))
          {#t (error "NUMEX first applied to non-number")}))]
     
     [(second? e)
-     (let [(v (second-e e) )]
+     (let [(v (eval-under-env (second-e e) env))]
        ; body
        (cond
          ((apair? v) (apair-e2 v))
+         ((munit? v) (munit))
          {#t (error "NUMEX second applied to non-number")}))]
     [(ismunit? e)
      (let [(v (ismunit-e e))]
@@ -193,7 +196,8 @@
        (cond
          ((munit? v) (int 1))
          {#t (int 0)}))]
-    
+    [(munit? e)
+     e]
     ;; CHANGE add more cases here => of course
     [#t (error (format "bad NUMEX expression: ~v" e))])) ;; Error handling - Type ONE ;;
 
@@ -219,7 +223,13 @@
 
 ;; Problem 4
 
-(define numex-map "CHANGE")
+(define numex-map
+  (lambda (x)
+    (lambda (y)
+      (let ([v (eval-exp (first y))])
+        (if (munit? v)
+            (munit)
+            (apair (eval-exp (call x v)) ((numex-map x) (second y))))))))
 
 (define numex-mapAddN
   (mlet "map" numex-map
