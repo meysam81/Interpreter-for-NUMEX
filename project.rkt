@@ -87,10 +87,7 @@
     ; functions => I think I got it!!!
     [(fun? e)
      (let [(v1 {fun-formal e})]
-       (if (string? v1) ; a variable?
-           (closure env e) ; then
-           (error "NUMEX function argument not a string"); else
-           ))]
+           (closure env e))]
     [(call? e)
      (let {[v1 (eval-under-env (call-funexp e) env)]
            [v2 (eval-under-env (call-actual e) env)]}
