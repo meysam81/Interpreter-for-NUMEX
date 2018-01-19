@@ -46,7 +46,7 @@
                                      (#t (cons
                                           (apair-e1 xs) (numexlist->racketlist (apair-e2 xs))))))
 
-;; Problem 2
+;; Problem 2 => I think I got it => I'm sure I got it!!! pooooooof!!!
 
 ;; lookup a variable in an environment
 ;; Complete this function => done beautifully, as I myself enjoyed
@@ -55,7 +55,12 @@
         [(equal? str (car (car env))) (cdr (car env))]
         [#t (envlookup (cdr env) str)]
         ))
-
+; =============== adding my own append list ====================
+(define (append-args x y)
+  (if (null? x)
+      (if (null? y) null (cons (car y) (append-args x (cdr y))))
+      (cons (car x) (append-args (cdr x) y))))
+; ==============================================================
 ;; Do NOT change the two cases given to you.  
 ;; DO add more cases for other kinds of NUMEX expressions.
 ;; We will test eval-under-env by calling it directly even though
@@ -75,16 +80,15 @@
      (let
          [(v1 (closure-fun e))
           (v2 (closure-env e))]
-      (cond
-        ((fun? v1) e)  ; return the closure itself
-         (#t (error "NUMEX closure applied to non-number"))))]
+      (if (fun? v1) (if (list? env) e
+                       (error "NUMEX closure's env not a racket-list"))  ; return the closure itself
+         (#t (error "NUMEX closure applied to non-function"))))]
 
     ; functions => I think I got it!!!
     [(fun? e)
-     (let [(v1 {fun-formal e})
-           {v2 {fun-body e}}]
+     (let [(v1 {fun-formal e})]
        (if (string? v1) ; a variable?
-           (closure env (eval-under-env v2 env)); then
+           (closure env e) ; then
            (error "NUMEX function argument not a string"); else
            ))]
     [(call? e)
@@ -94,12 +98,20 @@
            {if (int? v2)
                ; to be honest, I don't even know what I did below,
                ; I just did and bang, magic happens
-               (eval-under-env (closure-fun v1) v2)
+               (eval-under-env (fun-body (closure-fun v1)) ; give the closure to it recursively ...
+                               ; ... with the closure's own invironment
+                               (append-args (list (cons (fun-nameopt (call-funexp e)) v1))
+                               (append-args (list (cons (fun-formal (call-funexp e)) v2))
+                                            (closure-env v1)))
+                               )
                (error "NUMEX call-actual not an int")}
            (error "NUMEX call-funexp not a closure")))
      ]
+    [(mlet? e)
+     (let [{v1 (eval-under-env (mlet-e1 e) env)}]
+       (eval-under-env (mlet-e2 e) (append-args (list (cons (mlet-s e) v1)) env)))]
     
-    [(var? e) ;; A variable evaluates to the value associated with it in the given environment
+    [(var? e) ; A variable evaluates to the value associated with it in the given environment
      (envlookup env (var-string e))]
     
     [(add? e) 
